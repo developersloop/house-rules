@@ -20,6 +20,7 @@
     <b-row>
       <b-col cols="12" sm="12" md="10" lg="12">
         <b-pagination
+          v-show="entities.length || fake.length"
           v-model="currentPage"
           :total-rows="6"
           :per-page="3"
