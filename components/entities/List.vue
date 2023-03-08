@@ -17,16 +17,16 @@
           :currentPage="currentPage"
           :perPage="4"
         >
-        <template #cell(#)="row" v-if="fake.length">
+        <template #cell(#)="row" v-if="entities.length">
           <div>
             <b-icon
               v-b-modal.edit-rules
               style="cursor: pointer;"
               class="mr-2"
               icon="pencil"
-              @click="setReferenceModal('edit-rules')"
+              @click="setReferenceModal('edit-rules', row?.item?.id)"
             />
-            <b-icon icon="trash" style="cursor: pointer;"/>
+            <b-icon icon="trash" @click="deleteEntities(row?.item?.id)" style="cursor: pointer;"/>
           </div>
         </template>
         </b-table>
@@ -35,7 +35,7 @@
     <b-row class="row-pagination">
       <b-col cols="12" sm="12" md="10" lg="12">
         <b-pagination
-          v-show="entities.length || fake.length"
+          v-show="entities.length"
           v-model="currentPage"
           :total-rows="6"
           :per-page="3"
@@ -43,10 +43,16 @@
         ></b-pagination>
       </b-col>
     </b-row>
-    <Modal :reference="reference" :title="title">
+    <Modal
+      :reference="reference"
+      :title="title"
+      @register="register()"
+      @toUpdate="toUpdate()"
+      @closeModal="closeModal"
+    >
       <template v-slot:content>
         <b-form-input v-model="name" placeholder="Enter your name"></b-form-input>
-        <b-form-radio v-model="active" size="md" class="pt-2">Is active?</b-form-radio>
+        <b-form-radio v-model="active" size="md" :value="1" class="pt-2">Is active?</b-form-radio>
       </template>
     </Modal>
   </b-container>
@@ -63,7 +69,7 @@ export default {
     return {
       reference: '',
       title: '',
-      active: false,
+      active: 0,
       name: '',
       currentPage: 1,
       fields: [
@@ -87,51 +93,8 @@ export default {
           key: '#'
         }
       ],
-      fake: [
-        {
-          "id": 2,
-          "name": "No Pets",
-          "active": 1,
-          "order": 0,
-        },
-        {
-          "id": 4,
-          "name": "Events (On Application)",
-          "active": 1,
-          "order": 0
-        },
-        {
-          "id": 5,
-          "name": "Late Check-out Available",
-          "active": 1,
-          "order": 0,
-        },
-        {
-          "id": 6,
-          "name": "No Smoking",
-          "active": 1,
-          "order": 0
-        },
-        {
-          "id": 7,
-          "name": "No Parties\/Events",
-          "active": 1,
-          "order": 0
-        },
-        {
-          "id": 8,
-          "name": "Age Restriction",
-          "active": 1,
-          "order": 0
-        },
-        {
-          "id": 10,
-          "name": "New House Rules vitor",
-          "active": 1,
-          "order": 0
-        }
-      ],
-      empty: [{ id: null, name: null, active: null, order: null}]
+      empty: [{ id: null, name: null, active: null, order: null}],
+      entitie: null,
     }
   },
   mounted() {
@@ -142,20 +105,49 @@ export default {
       'entities': 'entities/getEntities'
     }),
     getItems() {
-      return this.fake.length
-        ? this.fake
+      return this.entities.length
+        ? this.entities
         : this.empty
     }
   },
   methods: {
     ...mapActions({
-      'fetchEntities': 'entities/fetchEntities'
+      'fetchEntities': 'entities/fetchEntities',
+      'createEntities': 'entities/createEntities',
+      'updateEntities': 'entities/updateEntities',
+      'deleteEntities': 'entities/deleteEntities'
     }),
-    setReferenceModal(refs) {
+    setReferenceModal(refs, id = null) {
       let prefix = 'rules'
       this.reference = refs
       if(refs.includes('store')) this.title = `Register ${prefix}`
-      else this.title = `Edit ${prefix}`
+      else {
+        let entitie = this.entities.find(entitie => entitie?.id == id)
+        this.entitie = entitie
+        this.title = `Edit ${prefix}`
+        this.name = entitie?.name
+        this.active = entitie.active
+
+      }
+    },
+    register() {
+      this.createEntities({ name: this.name, active: this.active })
+      this.closeModal()
+    },
+    toUpdate() {
+      this.updateEntities({
+        id: this.entitie?.id,
+        payload: {
+          name: this.name,
+          active: this.active
+       }
+      })
+      this.closeModal()
+    },
+    closeModal() {
+      this.name = null,
+      this.active = 0
+      this.$bvModal.hide(this.reference)
     }
   },
 }

@@ -13,6 +13,6 @@ import axios from 'axios'
 const configureDefault = {
   baseURL: 'https://sys-dev.searchandstay.com/api/admin'
 }
-axios.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('token')}`;
+axios.defaults.headers.common['Authorization'] = `Bearer 7dcf309ea0b6f971e0f946190b36f246113cc34681c90e68e7f92b673b1fadb4`;
 
 export const $http = axios.create(configureDefault)

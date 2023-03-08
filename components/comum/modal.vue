@@ -8,8 +8,8 @@
       <slot name="content"></slot>
     </div>
     <template #modal-footer>
-        <b-button class="mt-3" @click="$bvModal.hide(reference)">Cancel</b-button>
-        <b-button variant="primary" class="mt-3">{{ labelAction }}</b-button>
+        <b-button class="mt-3" @click="$emit('closeModal')">Cancel</b-button>
+        <b-button variant="primary" class="mt-3" @click="send()">{{ labelAction }}</b-button>
       </template>
   </b-modal>
 </template>
@@ -36,6 +36,15 @@ export default {
       return this.reference.includes('store')
         ? 'Register'
         : 'To Update'
+    }
+  },
+  methods: {
+    send() {
+      let type = this.reference.includes('store')
+        ? 'register'
+        : 'toUpdate'
+
+      this.$emit(type)
     }
   }
 }
