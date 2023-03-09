@@ -1,52 +1,87 @@
-import { $http } from '../../service/index'
+import { $http, login } from '../../service/index'
 
-import { FETCH_ENTITIES } from "../../mutationsTypes/index"
+import {
+    FETCH_ENTITIES,
+    SET_LOADING,
+    SET_TOKEN,
+    SET_PAGINATION,
+} from "../../mutationsTypes/index"
 
 export const state = () => ({
-  entities: []
+  entities: [],
+  pagination: {},
+  loading: false,
+  token: null
 })
 
 export const getters = {
-  getEntities: (state) => state.entities
+  getEntities: state => state.entities,
+  loading: state => state.loading,
+  token: state => state.token,
+  pagination: state => state.pagination
 }
 
 export const mutations = {
   [FETCH_ENTITIES](state, payload) {
     state.entities = [...payload]
+  },
+  [SET_PAGINATION](state, pagination) {
+    state.pagination = pagination
+  },
+  [SET_LOADING](state, token) {
+    state.loading = token
+  },
+  [SET_TOKEN](state, token) {
+    state.token = token
   }
 }
 export const actions = {
   fetchEntities(context) {
-    return new Promise((resolve,reject) => {
-       $http.get('/house_rules')
-        .then(resp => {
-          if(resp) {
-            context?.commit(FETCH_ENTITIES, resp?.data?.data?.entities || [])
-            resolve(resp)
+    login()
+      .then(resp => {
+        context.commit(SET_LOADING, true)
+        context.commit(SET_TOKEN, resp.data.data.result.access_token)
+        $http.get('house_rules', {
+          headers: {
+            'Authorization': `Bearer ${resp.data.data.result.access_token}`
           }
-          else reject(resp)
         })
-    })
+        .then(resp => {
+            context.commit(SET_PAGINATION, resp.data.data.pagination)
+            if(resp) context?.commit(FETCH_ENTITIES, resp?.data?.data?.entities || [])
+          })
+          .finally(_ => context.commit(SET_LOADING, false))
+      })
   },
-  createEntities(context, payload) {
+  createEntities({ getters }, payload) {
     return new Promise((resolve,reject) => {
-      $http.post('/house_rules', {
+      $http.post('/house_rules',{
         house_rules:{
           ...payload
+        },
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${getters.token}`
         }
       })
-        .then(resp => {
-          if(resp) resolve(resp)
-          else reject(resp)
-        })
+      .then(resp => {
+        if(resp) resolve(resp)
+        else reject(resp)
+      })
     })
   },
-  updateEntities(context, { id, payload }) {
+  updateEntities({ getters }, { id, payload }) {
     return new Promise((resolve,reject) => {
       $http.put(`/house_rules/${id}`, {
         house_rules:{
           ...payload
         }
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${getters.token}`
+        }
       })
         .then(resp => {
           if(resp) resolve(resp)
@@ -54,9 +89,13 @@ export const actions = {
         })
     })
   },
-  deleteEntities(context, id) {
+  deleteEntities({ getters }, id) {
     return new Promise((resolve,reject) => {
-       $http.delete(`/house_rules/${id}`)
+       $http.delete(`/house_rules/${id}`, {
+        headers: {
+          'Authorization': `Bearer ${getters.token}`
+        }
+       })
         .then(resp => {
           if(resp) resolve(resp)
           else reject(resp)

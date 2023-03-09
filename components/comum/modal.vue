@@ -8,8 +8,8 @@
       <slot name="content"></slot>
     </div>
     <template #modal-footer>
-        <b-button class="mt-3" @click="$emit('closeModal')">Cancel</b-button>
-        <b-button variant="primary" class="mt-3" @click="send()">{{ labelAction }}</b-button>
+        <b-button ref="cancel" class="mt-3" @click="$emit('closeModal')">Cancel</b-button>
+        <b-button ref="send" variant="primary" class="mt-3" @click="send()">{{ labelAction }}</b-button>
       </template>
   </b-modal>
 </template>

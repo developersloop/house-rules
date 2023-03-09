@@ -3,17 +3,20 @@
     <b-row align-v="center" align-h="center">
       <b-col cols="12" sm="12" md="10" lg="12" class="col-custom">
         <b-icon
+          v-show="!loading && getFieds.length"
           v-b-modal.store-rules
           style="cursor: pointer;"
           class="mb-3 icon float-right"
           icon="plus-circle"
           font-scale="2.2"
+          ref="reference"
           @click="setReferenceModal('store-rules')"
         />
         <b-table
+          v-show="!loading && getFieds.length"
           striped hover
           :fields="fields"
-          :items="getItems"
+          :items="entities"
           :currentPage="currentPage"
           :perPage="4"
         >
@@ -24,9 +27,9 @@
               style="cursor: pointer;"
               class="mr-2"
               icon="pencil"
-              @click="setReferenceModal('edit-rules', row?.item?.id)"
+              @click="setReferenceModal('edit-rules', row.item.id)"
             />
-            <b-icon icon="trash" @click="deleteEntities(row?.item?.id)" style="cursor: pointer;"/>
+            <b-icon icon="trash" @click="del(row.item.id)" style="cursor: pointer;"/>
           </div>
         </template>
         </b-table>
@@ -35,14 +38,18 @@
     <b-row class="row-pagination">
       <b-col cols="12" sm="12" md="10" lg="12">
         <b-pagination
-          v-show="entities.length"
-          v-model="currentPage"
-          :total-rows="6"
-          :per-page="3"
-          aria-controls="my-table"
+        v-show="entities.length"
+        v-model="currentPage"
+        :total-rows="pagination.total"
+        :per-page="4"
+        aria-controls="my-table"
         ></b-pagination>
       </b-col>
     </b-row>
+    <div class="loader">
+      <b-icon v-show="loading" icon="arrow-counterclockwise" animation="spin-reverse" font-scale="4"></b-icon>
+      <div v-show="crash" class="crash">Oh no, come back later :(</div>
+    </div>
     <Modal
       :reference="reference"
       :title="title"
@@ -50,14 +57,19 @@
       @toUpdate="toUpdate()"
       @closeModal="closeModal"
     >
-      <template v-slot:content>
-        <b-form-input v-model="name" placeholder="Enter your name"></b-form-input>
-        <b-form-radio v-model="active" size="md" :value="1" class="pt-2">Is active?</b-form-radio>
-      </template>
-    </Modal>
-  </b-container>
+    <template v-slot:content>
+      <b-form-input v-model="name" placeholder="Enter your name"></b-form-input>
+      <div class="d-flex flex-row align-items-baseline">
+        <span class="mr-2">Is Active?</span>
+        <b-form-radio v-model="active" size="md" :value="1" class="pt-2 mr-2">yes</b-form-radio>
+        <b-form-radio v-model="active" size="md" :value="0" class="pt-2">no</b-form-radio>
+      </div>
+    </template>
+  </Modal>
+</b-container>
 </template>
 <script>
+import Vue from 'vue'
 import { mapActions, mapGetters } from 'vuex'
 import Modal from '../comum/modal.vue'
 export default {
@@ -72,6 +84,7 @@ export default {
       active: 0,
       name: '',
       currentPage: 1,
+      entitie: null,
       fields: [
         {
           key: 'id',
@@ -93,22 +106,24 @@ export default {
           key: '#'
         }
       ],
-      empty: [{ id: null, name: null, active: null, order: null}],
-      entitie: null,
+      crash: false
     }
   },
   mounted() {
     this.fetchEntities()
+      .catch(_ => this.crash = true)
   },
   computed: {
     ...mapGetters({
-      'entities': 'entities/getEntities'
+      'entities': 'entities/getEntities',
+      'loading': 'entities/loading',
+      'pagination': 'entities/pagination'
     }),
-    getItems() {
-      return this.entities.length
+    getFieds() {
+      return !this.loading
         ? this.entities
-        : this.empty
-    }
+        : null
+    },
   },
   methods: {
     ...mapActions({
@@ -127,12 +142,14 @@ export default {
         this.title = `Edit ${prefix}`
         this.name = entitie?.name
         this.active = entitie.active
-
       }
     },
     register() {
       this.createEntities({ name: this.name, active: this.active })
-      this.closeModal()
+        .then(({ data }) => {
+          Vue.set(this.entities, ((this.entities.length-1) + 1), data?.data)
+        })
+        .finally(_ => this.closeModal())
     },
     toUpdate() {
       this.updateEntities({
@@ -140,9 +157,20 @@ export default {
         payload: {
           name: this.name,
           active: this.active
-       }
+        }
       })
-      this.closeModal()
+      .then(({ data }) => {
+        let entitie = this.entities.find(entitie => entitie?.id == data?.data?.id)
+        entitie.name = this.name
+        entitie.active = this.active
+        this.closeModal()
+      })
+    },
+    del(id) {
+      this.deleteEntities(id)
+        .finally(_ => {
+          this.entities.splice(this.entities.indexOf(this.entitie),1);
+        })
     },
     closeModal() {
       this.name = null,
@@ -157,7 +185,6 @@ export default {
   display: flex;
   flex-flow: row;
   justify-content: center;
-
 }
 
 .col-custom{
@@ -169,9 +196,19 @@ export default {
     margin-right: 10px;
     font-size: 190% !important;
   }
-
 }
 .row-pagination{
   @media (max-width: 992px) { justify-content: center; }
+}
+
+.loader{
+  display: flex;
+  flex-flow: row;
+  justify-content: center;
+}
+
+.crash{
+  font-size: larger;
+  font-weight: bold;
 }
 </style>

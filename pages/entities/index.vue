@@ -4,7 +4,7 @@
   </div>
 </template>
 <script>
-import ListEntities from '../../components/entities/List.vue'
+import ListEntities from '../../components/entities/ListEntities.vue'
 export default {
   name: 'entities',
   components: {
