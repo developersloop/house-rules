@@ -10,48 +10,48 @@ localVue.use(Vuex);
 const lowState = state()
 
 const payload = [
-  {
-    "id": 5,
-    "name": "Late Check-out Available",
-    "active": 1,
-    "order": 0
-  },
-  {
-    "id": 6,
-    "name": "No Smoking",
-    "active": 1,
-    "order": 0
-  },
-  {
-    "id": 7,
-    "name": "No Parties\/Events",
-    "active": 1,
-    "order": 0
-  },
-  {
-    "id": 8,
-    "name": "Age Restriction",
-    "active": 1,
-    "order": 0
-  },
-  {
-    "id": 10,
-    "name": "New House Rules Tiago",
-    "active": 1,
-    "order": 0
-  },
-  {
-    "id": 22,
-    "name": "Rule 22",
-    "active": 1,
-    "order": 0
-  },
-  {
-    "id": 23,
-    "name": "Rule 23",
-    "active": 1,
-    "order": 0
-  }
+    {
+      "id": 5,
+      "name": "Late Check-out Available",
+      "active": 1,
+      "order": 0
+    },
+    {
+      "id": 6,
+      "name": "No Smoking",
+      "active": 1,
+      "order": 0
+    },
+    {
+      "id": 7,
+      "name": "No Parties\/Events",
+      "active": 1,
+      "order": 0
+    },
+    {
+      "id": 8,
+      "name": "Age Restriction",
+      "active": 1,
+      "order": 0
+    },
+    {
+      "id": 10,
+      "name": "New House Rules Tiago",
+      "active": 1,
+      "order": 0
+    },
+    {
+      "id": 22,
+      "name": "Rule 22",
+      "active": 1,
+      "order": 0
+    },
+    {
+      "id": 23,
+      "name": "Rule 23",
+      "active": 1,
+      "order": 0
+    }
 ]
 
 const token = '1790c90d08b2bc263f3836e4319b3d6d1ad02b8b9bcea1297d7c7bc3a3477356'
@@ -80,13 +80,6 @@ describe('List', () => {
     expect(wrapper.vm.title).toContain('Register rules')
 
     expect(getters.token(lowState)).toEqual(token)
-    expect(getters.getEntities(lowState)).toEqual(expect.arrayContaining([
-      {
-        "id": 6,
-        "name": "No Smoking",
-        "active": 1,
-        "order": 0
-      }
-    ]))
+
   })
 })

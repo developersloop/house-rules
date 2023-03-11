@@ -1,3 +1,4 @@
+import Vue from 'vue'
 import { $http, login } from '../../service/index'
 
 import {
@@ -8,7 +9,7 @@ import {
 } from "../../mutationsTypes/index"
 
 export const state = () => ({
-  entities: [],
+  entities: {},
   pagination: {},
   loading: false,
   token: null
@@ -23,7 +24,7 @@ export const getters = {
 
 export const mutations = {
   [FETCH_ENTITIES](state, payload) {
-    state.entities = [...payload]
+    Vue.set(state.entities, 'results', [...payload])
   },
   [SET_PAGINATION](state, pagination) {
     state.pagination = pagination
@@ -36,22 +37,35 @@ export const mutations = {
   }
 }
 export const actions = {
-  fetchEntities(context) {
-    login()
-      .then(resp => {
-        context.commit(SET_LOADING, true)
-        context.commit(SET_TOKEN, resp.data.data.result.access_token)
-        $http.get('house_rules', {
-          headers: {
-            'Authorization': `Bearer ${resp.data.data.result.access_token}`
-          }
-        })
-        .then(resp => {
-            context.commit(SET_PAGINATION, resp.data.data.pagination)
-            if(resp) context?.commit(FETCH_ENTITIES, resp?.data?.data?.entities || [])
-          })
-          .finally(_ => context.commit(SET_LOADING, false))
+  fetchEntities(context, page = 1) {
+    if(context.state.token) {
+      $http.get(`house_rules?page=${page}`, {
+        headers: {
+          'Authorization': `Bearer ${context.state.token}`
+        }
       })
+      .then(resp => {
+        context.commit(SET_PAGINATION, resp.data.data.pagination)
+        if(resp) context?.commit(FETCH_ENTITIES, resp?.data?.data?.entities || [])
+      })
+    }
+    else {
+      login()
+        .then(resp => {
+          context.commit(SET_LOADING, true)
+          context.commit(SET_TOKEN, resp.data.data.result.access_token)
+          $http.get(`house_rules?page=${page}`, {
+            headers: {
+              'Authorization': `Bearer ${resp.data.data.result.access_token}`
+            }
+          })
+          .then(resp => {
+              context.commit(SET_PAGINATION, resp.data.data.pagination)
+              if(resp) context?.commit(FETCH_ENTITIES, resp?.data?.data?.entities || [])
+            })
+            .finally(_ => context.commit(SET_LOADING, false))
+        })
+    }
   },
   createEntities({ getters }, payload) {
     return new Promise((resolve,reject) => {
